@@ -56,6 +56,7 @@ public static class PredefinedDataSets
 /// </summary>
 public class DataSetSpecifications
 {
+    private readonly Lock _lock = new();
     /// <summary>
     /// Internal flag to ensure the delay warning message is only generated once.
     /// </summary>
@@ -112,18 +113,21 @@ public class DataSetSpecifications
     /// <returns>True if the message was generated; false if it was already generated before.</returns>
     public bool TryGetDelayWarningMessage(out string? message)
     {
-        message = null;
-        if (_delayWarningFired)
+        lock (_lock)
         {
-            return false;
-        }
-        message = $"Dataset [{DataSetID}] historical data information:\n" +
-            $"- Users with a live license: delayed by approximately {HistoricalDelayWithLicense}." +
-            $"For access to more recent data, use the intraday replay feature of the live data client.\n" +
-            $"- Users without a license: delayed by {HistoricalDelayWithoutLicense}.\n" +
-            $"- More information: {Link} (go to the 'Specifications' tab)";
+            message = null;
+            if (_delayWarningFired)
+            {
+                return false;
+            }
+            message = $"Dataset [{DataSetID}] historical data information:\n" +
+                $"- Users with a live license: delayed by approximately {HistoricalDelayWithLicense}." +
+                $"For access to more recent data, use the intraday replay feature of the live data client.\n" +
+                $"- Users without a license: delayed by {HistoricalDelayWithoutLicense}.\n" +
+                $"- More information: {Link} (go to the 'Specifications' tab)";
 
-        _delayWarningFired = true;
-        return true;
+            _delayWarningFired = true;
+            return true; 
+        }
     }
 }

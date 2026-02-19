@@ -48,6 +48,11 @@ public partial class DataBentoProvider : MappedSynchronizingHistoryProvider
     private bool _dataBentoDatasetErrorFired;
 
     /// <summary>
+    /// Indicates whether the warning for canonical symbols has been fired.
+    /// </summary>
+    private bool _invalidCanonicalSymbolWarningFired;
+
+    /// <summary>
     /// Gets the total number of data points emitted by this history provider
     /// </summary>
     public override int DataPointCount => _dataPointCount;
@@ -67,6 +72,17 @@ public partial class DataBentoProvider : MappedSynchronizingHistoryProvider
     /// <returns>An enumerable of BaseData points</returns>
     public override IEnumerable<BaseData>? GetHistory(HistoryRequest historyRequest)
     {
+        if (historyRequest.Symbol.IsCanonical())
+        {
+            if (!_invalidCanonicalSymbolWarningFired)
+            {
+                _invalidCanonicalSymbolWarningFired = true;
+                Log.Trace($"{nameof(DataBentoProvider)}.{nameof(GetHistory)}: Canonical symbol '{historyRequest.Symbol}' is not supported.");
+            }
+            Log.Trace($"{nameof(DataBentoProvider)}.{nameof(GetHistory)}: Canonical symbol '{historyRequest.Symbol}' is not supported.");
+            return null;
+        }
+
         if (!CanSubscribe(historyRequest.Symbol))
         {
             if (!_invalidSecurityTypeWarningFired)
